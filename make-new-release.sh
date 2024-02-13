@@ -17,18 +17,28 @@ get_next_version_number() {
 	done
 }
 
+git add .
+if ! git diff-index --quiet HEAD; then
+	printf "Working directory is not clean. Please commit or stash your changes.\n"
+	exit 1
+fi
+
 VERSION=$(get_next_version_number)
+git tag "v${VERSION}"
+
+git cliff --latest --prepend CHANGELOG.md > /dev/null
+${EDITOR:-vim} CHANGELOG.md
+docs/generate.sh
 
 sed -i -E "s/^version = \".+\"$/version = \"${VERSION}\"/" Cargo.toml
 cargo check
-git commit "Cargo.*" --message "Release v${VERSION}"
-git tag "v${VERSION}"
 
-gitchangelog
-${EDITOR:-vim} CHANGES.md
-docs/generate.sh
-git add CHANGES.md README.md
-git commit --amend --no-edit
+git add .
+# There are likely trailing whitespace changes in the changelog, but a single
+# run of pre-commit will fix these automatically.
+pre-commit run || git add .
+
+git commit --message "Release v${VERSION}"
 git tag "v${VERSION}" --force
 
 printf "\n\nSuccessfully created release %s\n" "v${VERSION}"

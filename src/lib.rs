@@ -133,8 +133,8 @@ pub type MarkdownEvents<'a> = Vec<Event<'a>>;
 /// # exporter.run().unwrap();
 /// ```
 
-pub type Postprocessor =
-    dyn Fn(&mut Context, &mut MarkdownEvents) -> PostprocessorResult + Send + Sync;
+pub type Postprocessor<'f> =
+    dyn Fn(&mut Context, &mut MarkdownEvents) -> PostprocessorResult + Send + Sync + 'f;
 type Result<T, E = ExportError> = std::result::Result<T, E>;
 
 const PERCENTENCODE_CHARS: &AsciiSet = &CONTROLS.add(b' ').add(b'(').add(b')').add(b'%').add(b'?');
@@ -241,8 +241,8 @@ pub struct Exporter<'a> {
     vault_contents: Option<Vec<PathBuf>>,
     walk_options: WalkOptions<'a>,
     process_embeds_recursively: bool,
-    postprocessors: Vec<&'a Postprocessor>,
-    embed_postprocessors: Vec<&'a Postprocessor>,
+    postprocessors: Vec<&'a Postprocessor<'a>>,
+    embed_postprocessors: Vec<&'a Postprocessor<'a>>,
 }
 
 impl<'a> fmt::Debug for Exporter<'a> {
@@ -665,9 +665,9 @@ impl<'a> Exporter<'a> {
         Ok(events)
     }
 
-    fn make_link_to_file<'b, 'c>(
+    fn make_link_to_file<'c>(
         &self,
-        reference: ObsidianNoteReference<'b>,
+        reference: ObsidianNoteReference<'_>,
         context: &Context,
     ) -> MarkdownEvents<'c> {
         let target_file = reference
@@ -806,7 +806,7 @@ fn is_markdown_file(file: &Path) -> bool {
 
 /// Reduce a given `MarkdownEvents` to just those elements which are children of the given section
 /// (heading name).
-fn reduce_to_section<'a, 'b>(events: MarkdownEvents<'a>, section: &'b str) -> MarkdownEvents<'a> {
+fn reduce_to_section<'a>(events: MarkdownEvents<'a>, section: &str) -> MarkdownEvents<'a> {
     let mut filtered_events = Vec::with_capacity(events.len());
     let mut target_section_encountered = false;
     let mut currently_in_target_section = false;
