@@ -1,9 +1,8 @@
 use eyre::{eyre, Result};
 use gumdrop::Options;
-use obsidian_export::postprocessors::softbreaks_to_hardbreaks;
 use obsidian_export::{ExportError, Exporter, FrontmatterStrategy, LinkStrategy, WalkOptions};
-use obsidian_export::{postprocessors::*, ExportError};
-use obsidian_export::{Exporter, FrontmatterStrategy, WalkOptions};
+use obsidian_export::postprocessors::softbreaks_to_hardbreaks;
+use obsidian_export::{postprocessors::*};
 use std::{env, path::PathBuf};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
